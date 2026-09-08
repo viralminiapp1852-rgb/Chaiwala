@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Chaiwala Premium Hub</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- AdsGram SDK -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #090a0f;
+      --card-bg: rgba(22, 27, 34, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-grad: linear-gradient(135deg, #ff007a 0%, #7928ca 100%);
+      --accent-solid: #ff007a;
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+      --glow: rgba(255, 0, 122, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 12px 16px 40px 16px;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Background Glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(121, 40, 202, 0.25) 0%, transparent 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0 16px 0;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-grad);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px var(--glow);
+    }
+
+    .brand-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff;
+    }
+
+    header h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(180deg, #ffffff, #a0aec0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .live-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #ff3366;
+      background: rgba(255, 51, 102, 0.12);
+      border: 1px solid rgba(255, 51, 102, 0.3);
+      padding: 4px 8px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: #ff3366;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.5; }
+    }
+
+    /* Video Feed */
+    .video-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Video Card */
+    .video-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .video-card:active {
+      transform: scale(0.985);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Thumbnail Area */
+    .thumbnail-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      background: #11141a;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .thumbnail-wrapper img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.35s ease;
+    }
+
+    .video-card:active .thumbnail-wrapper img {
+      transform: scale(1.04);
+    }
+
+    .badge-hd {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      letter-spacing: 0.5px;
+    }
+
+    .play-overlay-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 52px;
+      height: 52px;
+      background: rgba(13, 17, 23, 0.75);
+      backdrop-filter: blur(8px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .video-card:active .play-overlay-icon {
+      transform: translate(-50%, -50%) scale(1.15);
+      background: var(--accent-grad);
+      border-color: transparent;
+    }
+
+    .play-overlay-icon svg {
+      fill: #fff;
+      width: 22px;
+      height: 22px;
+      margin-left: 3px;
+    }
+
+    /* Video Details */
+    .video-details {
+      padding: 14px 14px 14px 14px;
+    }
+
+    .video-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.35;
+      color: #fff;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .play-action-btn {
+      width: 100%;
+      background: var(--accent-grad);
+      color: #fff;
+      border: none;
+      padding: 11px 0;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      box-shadow: 0 4px 15px var(--glow);
+    }
+
+    .play-action-btn svg {
+      width: 15px;
+      height: 15px;
+      fill: #fff;
+    }
+
+    /* Shimmer Skeleton Loader */
+    .skeleton-card {
+      background: #161b22;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      border: 1px solid var(--card-border);
+    }
+
+    .skeleton-thumb {
+      width: 100%;
+      padding-top: 56.25%;
+      background: linear-gradient(90deg, #161b22 25%, #21262d 50%, #161b22 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    .skeleton-body {
+      padding: 14px;
+    }
+
+    .skeleton-line {
+      height: 14px;
+      background: #21262d;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .skeleton-line.short { width: 60%; margin-bottom: 14px; }
+    .skeleton-btn { height: 38px; background: #21262d; border-radius: 10px; }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* Modern Video Modal */
+    .modal-player-container {
+      display: none;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 99999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-player-container.active {
+      display: flex;
+      animation: fadeIn 0.25s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 20px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      max-height: 88vh;
+      border-radius: 8px;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand-box">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+      </div>
+      <h1>Chaiwala Hub</h1>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      VIP Premium
+    </div>
+  </header>
+
+  <!-- Feed Container -->
+  <main class="video-feed" id="videoFeedContainer">
+    <!-- Skeleton Loaders -->
+    <div class="skeleton-card">
+      <div class="skeleton-thumb"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-btn"></div>
+      </div>
+    </div>
+    <div class="skeleton-card">
+      <div class="skeleton-thumb"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-btn"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Video Player -->
+  <div class="modal-player-container" id="playerModal">
+    <button class="modal-close-btn" id="closePlayerBtn">✕</button>
+    <video id="mainVideoPlayer" controls playsinline webkit-playsinline></video>
+  </div>
+
+  <script>
+    // 1. Telegram App Init
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    // 2. Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBNSpp5jQFiBLCR1f767zZVucZzVzi4kCA",
+      authDomain: "chaiwala-40576.firebaseapp.com",
+      databaseURL: "https://chaiwala-40576-default-rtdb.firebaseio.com",
+      projectId: "chaiwala-40576",
+      storageBucket: "chaiwala-40576.firebasestorage.app",
+      messagingSenderId: "85697817373",
+      appId: "1:85697817373:web:c8e123eaef5435649c0ff4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 3. AdsGram Setup
+    const ADSGRAM_BLOCK_ID = "YOUR_ADSGRAM_BLOCK_ID_HERE";
+    let AdController = null;
+
+    try {
+      if (window.Adsgram && ADSGRAM_BLOCK_ID !== "YOUR_ADSGRAM_BLOCK_ID_HERE") {
+        AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+      }
+    } catch(e) {
+      console.warn("Adsgram init error", e);
+    }
+
+    function runAdsgramVideo(onDone) {
+      if (AdController) {
+        AdController.show()
+          .then(() => { if (onDone) onDone(); })
+          .catch((err) => {
+            console.log("Ad status/skip:", err);
+            if (onDone) onDone();
+          });
+      } else {
+        if (onDone) onDone();
+      }
+    }
+
+    const feedContainer = document.getElementById("videoFeedContainer");
+    const playerModal = document.getElementById("playerModal");
+    const mainVideoPlayer = document.getElementById("mainVideoPlayer");
+    const closePlayerBtn = document.getElementById("closePlayerBtn");
+
+    let midRollTriggered5Min = false;
+    let midRollTriggered15Min = false;
+    let midRollTriggered30Min = false;
+
+    // 4. Load Videos Realtime
+    db.ref("videos").on("value", (snapshot) => {
+      const data = snapshot.val();
+      feedContainer.innerHTML = "";
+
+      if (!data) {
+        feedContainer.innerHTML = `
+          <div style="text-align:center; padding: 50px 20px; color: #8b949e;">
+            <p style="font-size: 1.1rem; margin-bottom: 6px;">✨ Abhi koi video uplode nahi hai</p>
+            <p style="font-size: 0.8rem;">Admin panel se nayi videos add karein!</p>
+          </div>
+        `;
+        return;
+      }
+
+      Object.entries(data).reverse().forEach(([id, video]) => {
+        const card = document.createElement("div");
+        card.className = "video-card";
+        card.innerHTML = `
+          <div class="thumbnail-wrapper" onclick="startVideoWithPreRoll('${video.videoUrl}')">
+            <img src="${video.thumbnailUrl || ''}" alt="thumb" loading="lazy" />
+            <div class="badge-hd">HD 4K</div>
+            <div class="play-overlay-icon">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+          <div class="video-details">
+            <h2 class="video-title">${video.title}</h2>
+            <button class="play-action-btn" onclick="startVideoWithPreRoll('${video.videoUrl}')">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              Watch Video
+            </button>
+          </div>
+        `;
+        feedContainer.appendChild(card);
+      });
+    });
+
+    // 5. Pre-Roll Ad Flow
+    function startVideoWithPreRoll(videoUrl) {
+      midRollTriggered5Min = false;
+      midRollTriggered15Min = false;
+      midRollTriggered30Min = false;
+
+      runAdsgramVideo(() => {
+        playerModal.classList.add("active");
+        mainVideoPlayer.src = videoUrl;
+        mainVideoPlayer.play();
+      });
+    }
+
+    // 6. Mid-Roll Video Ads (5 min, 15 min, 30 min)
+    mainVideoPlayer.addEventListener("timeupdate", () => {
+      const time = mainVideoPlayer.currentTime;
+
+      if (time >= 300 && !midRollTriggered5Min) {
+        midRollTriggered5Min = true;
+        mainVideoPlayer.pause();
+        runAdsgramVideo(() => {
+          mainVideoPlayer.play();
+        });
+      }
+
+      if (time >= 900 && !midRollTriggered15Min) {
+        midRollTriggered15Min = true;
+        mainVideoPlayer.pause();
+        runAdsgramVideo(() => {
+          mainVideoPlayer.play();
+        });
+      }
+
+      if (time >= 1800 && !midRollTriggered30Min) {
+        midRollTriggered30Min = true;
+        mainVideoPlayer.pause();
+        runAdsgramVideo(() => {
+          mainVideoPlayer.play();
+        });
+      }
+    });
+
+    // 7. Post-Roll Video Ad (Video Ended)
+    mainVideoPlayer.addEventListener("ended", () => {
+      runAdsgramVideo(() => {
+        playerModal.classList.remove("active");
+        mainVideoPlayer.src = "";
+      });
+    });
+
+    // Close Player
+    closePlayerBtn.addEventListener("click", () => {
+      mainVideoPlayer.pause();
+      mainVideoPlayer.src = "";
+      midRollTriggered5Min = false;
+      midRollTriggered15Min = false;
+      midRollTriggered30Min = false;
+      playerModal.classList.remove("active");
+    });
+  </script>
+</body>
+</html>
