@@ -48,7 +48,6 @@
       overflow-x: hidden;
     }
 
-    /* Ambient Background Glow */
     body::before {
       content: '';
       position: fixed;
@@ -62,7 +61,6 @@
       pointer-events: none;
     }
 
-    /* Header */
     header {
       display: flex;
       align-items: center;
@@ -132,7 +130,6 @@
       50% { transform: scale(1.4); opacity: 0.5; }
     }
 
-    /* Video Feed */
     .video-feed {
       display: flex;
       flex-direction: column;
@@ -141,7 +138,6 @@
       margin: 0 auto;
     }
 
-    /* Video Card */
     .video-card {
       background: var(--card-bg);
       backdrop-filter: blur(12px);
@@ -158,7 +154,6 @@
       border-color: rgba(255, 255, 255, 0.2);
     }
 
-    /* Thumbnail Area */
     .thumbnail-wrapper {
       position: relative;
       width: 100%;
@@ -176,10 +171,6 @@
       height: 100%;
       object-fit: cover;
       transition: transform 0.35s ease;
-    }
-
-    .video-card:active .thumbnail-wrapper img {
-      transform: scale(1.04);
     }
 
     .badge-hd {
@@ -228,9 +219,8 @@
       margin-left: 3px;
     }
 
-    /* Video Details */
     .video-details {
-      padding: 14px 14px 14px 14px;
+      padding: 14px;
     }
 
     .video-title {
@@ -269,7 +259,6 @@
       fill: #fff;
     }
 
-    /* Shimmer Skeleton Loader */
     .skeleton-card {
       background: #161b22;
       border-radius: 16px;
@@ -305,7 +294,6 @@
       100% { background-position: 200% 0; }
     }
 
-    /* Modern Video Modal */
     .modal-player-container {
       display: none;
       position: fixed;
@@ -357,7 +345,6 @@
 </head>
 <body>
 
-  <!-- Header -->
   <header>
     <div class="brand-box">
       <div class="brand-icon">
@@ -371,9 +358,7 @@
     </div>
   </header>
 
-  <!-- Feed Container -->
   <main class="video-feed" id="videoFeedContainer">
-    <!-- Skeleton Loaders -->
     <div class="skeleton-card">
       <div class="skeleton-thumb"></div>
       <div class="skeleton-body">
@@ -392,21 +377,18 @@
     </div>
   </main>
 
-  <!-- Modal Video Player -->
   <div class="modal-player-container" id="playerModal">
     <button class="modal-close-btn" id="closePlayerBtn">✕</button>
     <video id="mainVideoPlayer" controls playsinline webkit-playsinline></video>
   </div>
 
   <script>
-    // 1. Telegram App Init
     const tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) {
       tg.ready();
       tg.expand();
     }
 
-    // 2. Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBNSpp5jQFiBLCR1f767zZVucZzVzi4kCA",
       authDomain: "chaiwala-40576.firebaseapp.com",
@@ -420,12 +402,12 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 3. AdsGram Setup
-    const ADSGRAM_BLOCK_ID = "YOUR_ADSGRAM_BLOCK_ID_HERE";
+    // 46737 Block ID Integrated
+    const ADSGRAM_BLOCK_ID = "46737";
     let AdController = null;
 
     try {
-      if (window.Adsgram && ADSGRAM_BLOCK_ID !== "YOUR_ADSGRAM_BLOCK_ID_HERE") {
+      if (window.Adsgram) {
         AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
       }
     } catch(e) {
@@ -437,7 +419,7 @@
         AdController.show()
           .then(() => { if (onDone) onDone(); })
           .catch((err) => {
-            console.log("Ad status/skip:", err);
+            console.log("Ad skipped/error:", err);
             if (onDone) onDone();
           });
       } else {
@@ -454,7 +436,6 @@
     let midRollTriggered15Min = false;
     let midRollTriggered30Min = false;
 
-    // 4. Load Videos Realtime
     db.ref("videos").on("value", (snapshot) => {
       const data = snapshot.val();
       feedContainer.innerHTML = "";
@@ -462,8 +443,8 @@
       if (!data) {
         feedContainer.innerHTML = `
           <div style="text-align:center; padding: 50px 20px; color: #8b949e;">
-            <p style="font-size: 1.1rem; margin-bottom: 6px;">✨ Abhi koi video uplode nahi hai</p>
-            <p style="font-size: 0.8rem;">Admin panel se nayi videos add karein!</p>
+            <p style="font-size: 1.1rem; margin-bottom: 6px;">✨ Abhi koi video upload nahi hai</p>
+            <p style="font-size: 0.8rem;">Admin panel se videos add karein!</p>
           </div>
         `;
         return;
@@ -492,7 +473,7 @@
       });
     });
 
-    // 5. Pre-Roll Ad Flow
+    // 1. Pre-Roll Ad
     function startVideoWithPreRoll(videoUrl) {
       midRollTriggered5Min = false;
       midRollTriggered15Min = false;
@@ -505,36 +486,30 @@
       });
     }
 
-    // 6. Mid-Roll Video Ads (5 min, 15 min, 30 min)
+    // 2. Mid-Roll Ads (5m, 15m, 30m)
     mainVideoPlayer.addEventListener("timeupdate", () => {
       const time = mainVideoPlayer.currentTime;
 
       if (time >= 300 && !midRollTriggered5Min) {
         midRollTriggered5Min = true;
         mainVideoPlayer.pause();
-        runAdsgramVideo(() => {
-          mainVideoPlayer.play();
-        });
+        runAdsgramVideo(() => { mainVideoPlayer.play(); });
       }
 
       if (time >= 900 && !midRollTriggered15Min) {
         midRollTriggered15Min = true;
         mainVideoPlayer.pause();
-        runAdsgramVideo(() => {
-          mainVideoPlayer.play();
-        });
+        runAdsgramVideo(() => { mainVideoPlayer.play(); });
       }
 
       if (time >= 1800 && !midRollTriggered30Min) {
         midRollTriggered30Min = true;
         mainVideoPlayer.pause();
-        runAdsgramVideo(() => {
-          mainVideoPlayer.play();
-        });
+        runAdsgramVideo(() => { mainVideoPlayer.play(); });
       }
     });
 
-    // 7. Post-Roll Video Ad (Video Ended)
+    // 3. Post-Roll Ad (Video Ends)
     mainVideoPlayer.addEventListener("ended", () => {
       runAdsgramVideo(() => {
         playerModal.classList.remove("active");
@@ -542,7 +517,6 @@
       });
     });
 
-    // Close Player
     closePlayerBtn.addEventListener("click", () => {
       mainVideoPlayer.pause();
       mainVideoPlayer.src = "";
