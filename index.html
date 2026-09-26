@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Chaiwala Premium Hub</title>
+  <title>Chaiwala Hub - Viral Videos</title>
 
-  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,8 +12,8 @@
   <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- AdsGram SDK -->
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <!-- Monetag In-App Interstitial / Video Ad Script -->
+  <script src="//kulroakonsu.net/88/tag.min.js" data-zone="YOUR_MONETAG_ZONE_ID" async data-cfasync="false"></script>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -22,14 +21,14 @@
 
   <style>
     :root {
-      --bg-main: #090a0f;
-      --card-bg: rgba(22, 27, 34, 0.7);
-      --card-border: rgba(255, 255, 255, 0.08);
+      --bg: #0a0c10;
+      --card: #141820;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #ff007a;
       --accent-grad: linear-gradient(135deg, #ff007a 0%, #7928ca 100%);
-      --accent-solid: #ff007a;
-      --text-main: #f0f6fc;
-      --text-muted: #8b949e;
-      --glow: rgba(255, 0, 122, 0.35);
+      --text: #f0f6fc;
+      --muted: #8b949e;
+      --success: #20c997;
     }
 
     * {
@@ -37,358 +36,222 @@
       margin: 0;
       padding: 0;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      background-color: var(--bg-main);
-      color: var(--text-main);
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
       min-height: 100vh;
-      padding: 12px 16px 40px 16px;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: -100px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 320px;
-      height: 320px;
-      background: radial-gradient(circle, rgba(121, 40, 202, 0.25) 0%, transparent 70%);
-      z-index: -1;
-      pointer-events: none;
+      padding-bottom: 70px;
     }
 
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 0 16px 0;
-      margin-bottom: 12px;
-      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
     }
 
-    .brand-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .brand-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--accent-grad);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px var(--glow);
-    }
-
-    .brand-icon svg {
-      width: 18px;
-      height: 18px;
-      fill: #fff;
-    }
-
-    header h1 {
-      font-size: 1.15rem;
+    .brand {
+      font-size: 1.3rem;
       font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(180deg, #ffffff, #a0aec0);
+      background: var(--accent-grad);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .live-badge {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: #ff3366;
-      background: rgba(255, 51, 102, 0.12);
-      border: 1px solid rgba(255, 51, 102, 0.3);
-      padding: 4px 8px;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .live-dot {
-      width: 6px;
-      height: 6px;
-      background: #ff3366;
-      border-radius: 50%;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.4); opacity: 0.5; }
-    }
-
-    .video-feed {
+    .video-grid {
       display: flex;
       flex-direction: column;
-      gap: 18px;
-      max-width: 480px;
-      margin: 0 auto;
+      gap: 16px;
     }
 
     .video-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+      position: relative;
     }
 
-    .video-card:active {
-      transform: scale(0.985);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .thumbnail-wrapper {
+    .thumb-wrap {
       position: relative;
       width: 100%;
-      padding-top: 56.25%;
-      background: #11141a;
-      cursor: pointer;
-      overflow: hidden;
+      height: 200px;
+      background: #000;
     }
 
-    .thumbnail-wrapper img {
-      position: absolute;
-      top: 0;
-      left: 0;
+    .thumb-wrap img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.35s ease;
     }
 
-    .badge-hd {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(6px);
-      color: #fff;
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 3px 7px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      letter-spacing: 0.5px;
-    }
-
-    .play-overlay-icon {
+    .play-badge {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 52px;
       height: 52px;
-      background: rgba(13, 17, 23, 0.75);
-      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.7);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1.5px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      font-size: 1.4rem;
+      border: 2px solid rgba(255, 255, 255, 0.4);
     }
 
-    .video-card:active .play-overlay-icon {
-      transform: translate(-50%, -50%) scale(1.15);
-      background: var(--accent-grad);
-      border-color: transparent;
+    .card-info {
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .play-overlay-icon svg {
-      fill: #fff;
-      width: 22px;
-      height: 22px;
-      margin-left: 3px;
-    }
-
-    .video-details {
-      padding: 14px;
-    }
-
-    .video-title {
+    .card-title {
       font-size: 0.95rem;
-      font-weight: 600;
-      line-height: 1.35;
+      font-weight: 700;
       color: #fff;
-      margin-bottom: 12px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
     }
 
-    .play-action-btn {
+    .lock-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #ffc107;
+      background: rgba(255, 193, 7, 0.12);
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    /* Task & Unlock Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .modal-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .task-step {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--accent);
+      background: rgba(255, 0, 122, 0.1);
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      border: 1px dashed var(--accent);
+    }
+
+    .btn-ad {
       width: 100%;
       background: var(--accent-grad);
       color: #fff;
       border: none;
-      padding: 11px 0;
+      padding: 12px;
       border-radius: 10px;
       font-weight: 700;
-      font-size: 0.88rem;
-      letter-spacing: 0.3px;
+      font-size: 0.95rem;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      box-shadow: 0 4px 15px var(--glow);
+      margin-bottom: 10px;
     }
 
-    .play-action-btn svg {
-      width: 15px;
-      height: 15px;
-      fill: #fff;
-    }
-
-    .skeleton-card {
-      background: #161b22;
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 16px;
-      border: 1px solid var(--card-border);
-    }
-
-    .skeleton-thumb {
-      width: 100%;
-      padding-top: 56.25%;
-      background: linear-gradient(90deg, #161b22 25%, #21262d 50%, #161b22 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-    }
-
-    .skeleton-body {
-      padding: 14px;
-    }
-
-    .skeleton-line {
-      height: 14px;
-      background: #21262d;
-      border-radius: 4px;
-      margin-bottom: 8px;
-    }
-
-    .skeleton-line.short { width: 60%; margin-bottom: 14px; }
-    .skeleton-btn { height: 38px; background: #21262d; border-radius: 10px; }
-
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-
-    .modal-player-container {
+    .btn-download {
       display: none;
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.95);
-      backdrop-filter: blur(10px);
-      z-index: 99999;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-player-container.active {
-      display: flex;
-      animation: fadeIn 0.25s ease forwards;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .modal-close-btn {
-      position: absolute;
-      top: 18px;
-      right: 18px;
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      font-size: 20px;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      cursor: pointer;
-      z-index: 100000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    video {
       width: 100%;
-      max-height: 88vh;
-      border-radius: 8px;
-      outline: none;
+      background: var(--success);
+      color: #000;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 1rem;
+      text-decoration: none;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 10px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="brand-box">
-      <div class="brand-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-      </div>
-      <h1>Chaiwala Hub</h1>
-    </div>
-    <div class="live-badge">
-      <div class="live-dot"></div>
-      VIP Premium
-    </div>
+    <div class="brand">⚡ Chaiwala Hub</div>
   </header>
 
-  <main class="video-feed" id="videoFeedContainer">
-    <div class="skeleton-card">
-      <div class="skeleton-thumb"></div>
-      <div class="skeleton-body">
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line short"></div>
-        <div class="skeleton-btn"></div>
-      </div>
-    </div>
-    <div class="skeleton-card">
-      <div class="skeleton-thumb"></div>
-      <div class="skeleton-body">
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line short"></div>
-        <div class="skeleton-btn"></div>
-      </div>
-    </div>
-  </main>
+  <div class="video-grid" id="videoContainer">
+    <div style="text-align:center; padding: 40px; color: var(--muted);">Loading videos...</div>
+  </div>
 
-  <div class="modal-player-container" id="playerModal">
-    <button class="modal-close-btn" id="closePlayerBtn">✕</button>
-    <video id="mainVideoPlayer" controls playsinline webkit-playsinline></video>
+  <!-- Download Unlock Modal -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="modal-box">
+      <h3 class="modal-title" id="mVideoTitle">Viral Video</h3>
+      <p class="modal-desc">Complete 5 Video Ads to Unlock Direct Mediafire Link</p>
+      
+      <div class="task-step" id="taskCounterText">Ads Watched: 0 / 5</div>
+      
+      <button class="btn-ad" id="watchAdBtn" onclick="watchMonetagAd()">🎬 Watch Ad to Unlock</button>
+      
+      <a href="#" target="_blank" class="btn-download" id="downloadBtn">📥 Download Full Video (Mediafire)</a>
+      
+      <div>
+        <button class="btn-close" onclick="closeModal()">Close</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const tg = window.Telegram ? window.Telegram.WebApp : null;
-    if (tg) {
-      tg.ready();
-      tg.expand();
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
     }
 
+    // Firebase Config (Chaiwala Project)
     const firebaseConfig = {
       apiKey: "AIzaSyBNSpp5jQFiBLCR1f767zZVucZzVzi4kCA",
       authDomain: "chaiwala-40576.firebaseapp.com",
@@ -402,129 +265,102 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 46737 Block ID Integrated
-    const ADSGRAM_BLOCK_ID = "46737";
-    let AdController = null;
+    const videoContainer = document.getElementById("videoContainer");
+    const taskModal = document.getElementById("taskModal");
+    const mVideoTitle = document.getElementById("mVideoTitle");
+    const taskCounterText = document.getElementById("taskCounterText");
+    const watchAdBtn = document.getElementById("watchAdBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
 
-    try {
-      if (window.Adsgram) {
-        AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
-      }
-    } catch(e) {
-      console.warn("Adsgram init error", e);
-    }
+    let activeVideo = null;
+    let adsCount = 0;
+    const REQUIRED_ADS = 5;
 
-    function runAdsgramVideo(onDone) {
-      if (AdController) {
-        AdController.show()
-          .then(() => { if (onDone) onDone(); })
-          .catch((err) => {
-            console.log("Ad skipped/error:", err);
-            if (onDone) onDone();
-          });
-      } else {
-        if (onDone) onDone();
-      }
-    }
-
-    const feedContainer = document.getElementById("videoFeedContainer");
-    const playerModal = document.getElementById("playerModal");
-    const mainVideoPlayer = document.getElementById("mainVideoPlayer");
-    const closePlayerBtn = document.getElementById("closePlayerBtn");
-
-    let midRollTriggered5Min = false;
-    let midRollTriggered15Min = false;
-    let midRollTriggered30Min = false;
-
+    // Load Videos Realtime
     db.ref("videos").on("value", (snapshot) => {
       const data = snapshot.val();
-      feedContainer.innerHTML = "";
+      videoContainer.innerHTML = "";
 
       if (!data) {
-        feedContainer.innerHTML = `
-          <div style="text-align:center; padding: 50px 20px; color: #8b949e;">
-            <p style="font-size: 1.1rem; margin-bottom: 6px;">✨ Abhi koi video upload nahi hai</p>
-            <p style="font-size: 0.8rem;">Admin panel se videos add karein!</p>
-          </div>
-        `;
+        videoContainer.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--muted);">Abhi koi video uplod nahi hai.</div>`;
         return;
       }
 
-      Object.entries(data).reverse().forEach(([id, video]) => {
+      Object.entries(data).reverse().forEach(([id, vid]) => {
         const card = document.createElement("div");
         card.className = "video-card";
+        card.onclick = () => openTaskModal(vid);
+
+        const thumb = vid.thumbnailUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600';
+        
         card.innerHTML = `
-          <div class="thumbnail-wrapper" onclick="startVideoWithPreRoll('${video.videoUrl}')">
-            <img src="${video.thumbnailUrl || ''}" alt="thumb" loading="lazy" />
-            <div class="badge-hd">HD 4K</div>
-            <div class="play-overlay-icon">
-              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            </div>
+          <div class="thumb-wrap">
+            <img src="${thumb}" onerror="this.src='https://via.placeholder.com/600x300?text=Viral+Video'" />
+            <div class="play-badge">▶</div>
           </div>
-          <div class="video-details">
-            <h2 class="video-title">${video.title}</h2>
-            <button class="play-action-btn" onclick="startVideoWithPreRoll('${video.videoUrl}')">
-              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              Watch Video
-            </button>
+          <div class="card-info">
+            <div class="card-title">${vid.title}</div>
+            <div class="lock-tag">🔒 5 Ads Task</div>
           </div>
         `;
-        feedContainer.appendChild(card);
+        videoContainer.appendChild(card);
       });
     });
 
-    // 1. Pre-Roll Ad
-    function startVideoWithPreRoll(videoUrl) {
-      midRollTriggered5Min = false;
-      midRollTriggered15Min = false;
-      midRollTriggered30Min = false;
-
-      runAdsgramVideo(() => {
-        playerModal.classList.add("active");
-        mainVideoPlayer.src = videoUrl;
-        mainVideoPlayer.play();
-      });
+    function openTaskModal(vid) {
+      activeVideo = vid;
+      adsCount = 0;
+      mVideoTitle.innerText = vid.title;
+      updateTaskUI();
+      downloadBtn.style.display = "none";
+      watchAdBtn.style.display = "block";
+      taskModal.style.display = "flex";
     }
 
-    // 2. Mid-Roll Ads (5m, 15m, 30m)
-    mainVideoPlayer.addEventListener("timeupdate", () => {
-      const time = mainVideoPlayer.currentTime;
+    function closeModal() {
+      taskModal.style.display = "none";
+      activeVideo = null;
+    }
 
-      if (time >= 300 && !midRollTriggered5Min) {
-        midRollTriggered5Min = true;
-        mainVideoPlayer.pause();
-        runAdsgramVideo(() => { mainVideoPlayer.play(); });
+    function updateTaskUI() {
+      taskCounterText.innerText = `Ads Watched: ${adsCount} / ${REQUIRED_ADS}`;
+    }
+
+    // Monetag Ad Trigger
+    function watchMonetagAd() {
+      watchAdBtn.disabled = true;
+      watchAdBtn.innerText = "Loading Ad...";
+
+      // Trigger Monetag Ad Tag
+      if (typeof show_88 === 'function') {
+        show_88().then(() => {
+          onAdSuccess();
+        }).catch((e) => {
+          onAdSuccess(); // Agar fail ya ad-block ho tab bhi count aage badhaye
+        });
+      } else {
+        // Fallback agar direct link ya script trigger ho
+        setTimeout(() => {
+          onAdSuccess();
+        }, 1500);
       }
+    }
 
-      if (time >= 900 && !midRollTriggered15Min) {
-        midRollTriggered15Min = true;
-        mainVideoPlayer.pause();
-        runAdsgramVideo(() => { mainVideoPlayer.play(); });
+    function onAdSuccess() {
+      adsCount++;
+      updateTaskUI();
+      watchAdBtn.disabled = false;
+      watchAdBtn.innerText = "🎬 Watch Ad to Unlock";
+
+      if (adsCount >= REQUIRED_ADS) {
+        watchAdBtn.style.display = "none";
+        taskCounterText.innerText = "🎉 All 5 Ads Completed! Link Unlocked!";
+        taskCounterText.style.color = "var(--success)";
+        taskCounterText.style.borderColor = "var(--success)";
+        downloadBtn.href = activeVideo.videoUrl;
+        downloadBtn.style.display = "block";
       }
-
-      if (time >= 1800 && !midRollTriggered30Min) {
-        midRollTriggered30Min = true;
-        mainVideoPlayer.pause();
-        runAdsgramVideo(() => { mainVideoPlayer.play(); });
-      }
-    });
-
-    // 3. Post-Roll Ad (Video Ends)
-    mainVideoPlayer.addEventListener("ended", () => {
-      runAdsgramVideo(() => {
-        playerModal.classList.remove("active");
-        mainVideoPlayer.src = "";
-      });
-    });
-
-    closePlayerBtn.addEventListener("click", () => {
-      mainVideoPlayer.pause();
-      mainVideoPlayer.src = "";
-      midRollTriggered5Min = false;
-      midRollTriggered15Min = false;
-      midRollTriggered30Min = false;
-      playerModal.classList.remove("active");
-    });
+    }
   </script>
 </body>
 </html>
