@@ -12,9 +12,6 @@
   <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Official Monetag Telegram Mini App SDK Tag -->
-  <script src='//libtl.com/sdk.js' data-zone='11895299' data-sdk='show_11895299'></script>
-
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -113,7 +110,6 @@
       object-fit: cover;
     }
 
-    /* Views Badge (Top Left Corner) */
     .badge-views {
       position: absolute;
       top: 10px;
@@ -132,7 +128,6 @@
       z-index: 2;
     }
 
-    /* Lock Badge (Top Right Corner) */
     .badge-lock {
       position: absolute;
       top: 10px;
@@ -205,7 +200,6 @@
       box-shadow: 0 4px 14px rgba(255, 0, 85, 0.25);
     }
 
-    /* Modal Styles */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -361,7 +355,7 @@
     <div class="modal-box">
       <div class="modal-header-tag">Video Unlock Task</div>
       <div class="modal-title" id="mVideoTitle">Mediafire Video</div>
-      <div class="modal-subtitle">Direct download link unlock karne ke liye 5 video ads poore dekhein</div>
+      <div class="modal-subtitle">Download link unlock karne ke liye 5 sponsor ads check karein</div>
 
       <div class="task-progress-box">
         <div class="progress-info">
@@ -377,8 +371,8 @@
         </div>
       </div>
 
-      <button class="btn-watch" id="watchAdBtn" onclick="watchMonetagAd()">
-        ▶ Watch Video Ad (1/5)
+      <button class="btn-watch" id="watchAdBtn" onclick="watchAdsterraAd()">
+        ▶ Check Ad & Verify (1/5)
       </button>
 
       <a href="#" target="_blank" class="btn-download-unlocked" id="downloadBtn" onclick="onDownloadClicked()">
@@ -392,6 +386,9 @@
   </div>
 
   <script>
+    // Aapka Adsterra Smartlink
+    const ADSTERRA_SMARTLINK = "https://www.profitableratecpmnetwork.com/giygreaj3u?key=5ff015af48761eefa5123b07c2ace998";
+
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
@@ -424,16 +421,14 @@
     const REQUIRED_ADS = 5;
     const EXPIRY_TIME_MS = 5 * 60 * 1000;
 
-    // Fake Views Generator (500 se 1000 ke beech, consistent per video)
     function generateConsistentFakeViews(id) {
       let hash = 0;
       for (let i = 0; i < id.length; i++) {
         hash = (hash * 31 + id.charCodeAt(i)) % 1000000;
       }
-      return 500 + (Math.abs(hash) % 501); // 500 se 1000
+      return 500 + (Math.abs(hash) % 501);
     }
 
-    // Telegram CloudStorage Wrapper
     function getStoredData(key) {
       return new Promise((resolve) => {
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
@@ -464,7 +459,6 @@
       localStorage.removeItem(key);
     }
 
-    // Load Videos & Render Cards
     db.ref("videos").on("value", (snapshot) => {
       const data = snapshot.val();
       videoContainer.innerHTML = "";
@@ -537,7 +531,6 @@
       if (!activeVideo) return;
 
       mVideoTitle.innerText = activeVideo.title;
-
       adsCount = await getSavedAdProgress(id);
 
       updateStepUI();
@@ -550,7 +543,7 @@
         downloadBtn.style.display = "none";
         watchAdBtn.style.display = "flex";
         watchAdBtn.disabled = false;
-        watchAdBtn.innerText = `▶ Watch Video Ad (${adsCount + 1}/${REQUIRED_ADS})`;
+        watchAdBtn.innerText = `▶ Check Ad & Verify (${adsCount + 1}/${REQUIRED_ADS})`;
       }
 
       taskModal.style.display = "flex";
@@ -571,48 +564,33 @@
       }
 
       const percent = Math.round((adsCount / REQUIRED_ADS) * 100);
-      taskCounterText.innerText = `Ads Watched: ${adsCount} / ${REQUIRED_ADS}`;
+      taskCounterText.innerText = `Ads Completed: ${adsCount} / ${REQUIRED_ADS}`;
       taskPercentText.innerText = `${percent}%`;
 
       if (adsCount < REQUIRED_ADS) {
-        watchAdBtn.innerText = `▶ Watch Video Ad (${adsCount + 1}/${REQUIRED_ADS})`;
+        watchAdBtn.innerText = `▶ Check Ad & Verify (${adsCount + 1}/${REQUIRED_ADS})`;
       }
     }
 
-    window.watchMonetagAd = function() {
-      watchAdBtn.disabled = true;
-      watchAdBtn.innerText = "Video Ad Loading...";
-
-      if (typeof show_11895299 === 'function') {
-        show_11895299()
-          .then(() => {
-            onRealAdFinished();
-          })
-          .catch((err) => {
-            console.error("Ad closed early:", err);
-            alert("Ad poora nahi dekha gaya! Kripya poora ad dekhein.");
-            watchAdBtn.disabled = false;
-            watchAdBtn.innerText = `▶ Watch Video Ad (${adsCount + 1}/${REQUIRED_ADS})`;
-          });
+    // Adsterra Smartlink Trigger
+    window.watchAdsterraAd = function() {
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+        window.Telegram.WebApp.openLink(ADSTERRA_SMARTLINK);
       } else {
-        alert("Ad load ho raha hai, kripya 1-2 second ruk kar dobara dabayein!");
-        watchAdBtn.disabled = false;
-        watchAdBtn.innerText = `▶ Watch Video Ad (${adsCount + 1}/${REQUIRED_ADS})`;
+        window.open(ADSTERRA_SMARTLINK, '_blank');
       }
-    };
 
-    function onRealAdFinished() {
+      // Step count badhao
       adsCount++;
       saveAdProgress(currentVideoId, adsCount);
       updateStepUI();
-      watchAdBtn.disabled = false;
 
       if (adsCount >= REQUIRED_ADS) {
         watchAdBtn.style.display = "none";
         downloadBtn.href = activeVideo.videoUrl;
         downloadBtn.style.display = "block";
       }
-    }
+    };
 
     // Real Download Click Tracker
     window.onDownloadClicked = function() {
