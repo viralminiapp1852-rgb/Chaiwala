@@ -91,6 +91,7 @@
       overflow: hidden;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       transition: transform 0.15s ease;
+      position: relative;
     }
 
     .video-card:active {
@@ -112,6 +113,26 @@
       object-fit: cover;
     }
 
+    /* Views Badge (Top Left Corner) */
+    .badge-views {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 2;
+    }
+
+    /* Lock Badge (Top Right Corner) */
     .badge-lock {
       position: absolute;
       top: 10px;
@@ -127,6 +148,7 @@
       display: flex;
       align-items: center;
       gap: 4px;
+      z-index: 2;
     }
 
     .play-btn-circle {
@@ -183,6 +205,7 @@
       box-shadow: 0 4px 14px rgba(255, 0, 85, 0.25);
     }
 
+    /* Modal Styles */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -307,6 +330,7 @@
       text-align: center;
       margin-top: 4px;
       box-shadow: 0 6px 18px rgba(0, 210, 106, 0.35);
+      cursor: pointer;
     }
 
     .btn-close-modal {
@@ -357,7 +381,7 @@
         ▶ Watch Video Ad (1/5)
       </button>
 
-      <a href="#" target="_blank" class="btn-download-unlocked" id="downloadBtn">
+      <a href="#" target="_blank" class="btn-download-unlocked" id="downloadBtn" onclick="onDownloadClicked()">
         📥 Download on Mediafire
       </a>
 
@@ -400,6 +424,15 @@
     const REQUIRED_ADS = 5;
     const EXPIRY_TIME_MS = 5 * 60 * 1000;
 
+    // Fake Views Generator (500 se 1000 ke beech, consistent per video)
+    function generateConsistentFakeViews(id) {
+      let hash = 0;
+      for (let i = 0; i < id.length; i++) {
+        hash = (hash * 31 + id.charCodeAt(i)) % 1000000;
+      }
+      return 500 + (Math.abs(hash) % 501); // 500 se 1000
+    }
+
     // Telegram CloudStorage Wrapper
     function getStoredData(key) {
       return new Promise((resolve) => {
@@ -431,7 +464,7 @@
       localStorage.removeItem(key);
     }
 
-    // Load Videos
+    // Load Videos & Render Cards
     db.ref("videos").on("value", (snapshot) => {
       const data = snapshot.val();
       videoContainer.innerHTML = "";
@@ -446,10 +479,12 @@
         card.className = "video-card";
 
         const thumb = vid.thumbnailUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600';
+        const fakeViews = generateConsistentFakeViews(id);
 
         card.innerHTML = `
           <div class="thumb-wrap" onclick="openTaskModal('${id}')">
             <img src="${thumb}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600'" loading="lazy" />
+            <div class="badge-views">👁️ ${fakeViews} Views</div>
             <div class="badge-lock">🔒 5 Ads Task</div>
             <div class="play-btn-circle">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
@@ -578,6 +613,14 @@
         downloadBtn.style.display = "block";
       }
     }
+
+    // Real Download Click Tracker
+    window.onDownloadClicked = function() {
+      if (!currentVideoId) return;
+      db.ref(`videos/${currentVideoId}/downloadsCount`).transaction((current) => {
+        return (current || 0) + 1;
+      });
+    };
   </script>
 </body>
 </html>
