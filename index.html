@@ -12,8 +12,8 @@
   <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Monetag In-App Script -->
-  <script src="//kulroakonsu.net/88/tag.min.js" data-zone="YOUR_MONETAG_ZONE_ID" async data-cfasync="false"></script>
+  <!-- Official Monetag Telegram Mini App SDK Tag -->
+  <script src='//libtl.com/sdk.js' data-zone='11895299' data-sdk='show_11895299'></script>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -23,7 +23,6 @@
     :root {
       --bg: #090b10;
       --card: #131722;
-      --card-hover: #171d2b;
       --border: rgba(255, 255, 255, 0.08);
       --accent: #ff0055;
       --accent-grad: linear-gradient(135deg, #ff0055 0%, #7928ca 100%);
@@ -79,7 +78,6 @@
       border: 1px solid rgba(0, 210, 106, 0.2);
     }
 
-    /* Video Feed */
     .video-grid {
       display: flex;
       flex-direction: column;
@@ -155,7 +153,6 @@
       gap: 12px;
     }
 
-    /* YouTube 2-line Clamp */
     .card-title {
       font-size: 0.92rem;
       font-weight: 700;
@@ -186,7 +183,6 @@
       box-shadow: 0 4px 14px rgba(255, 0, 85, 0.25);
     }
 
-    /* Task Popup Modal */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -243,7 +239,6 @@
       margin-bottom: 20px;
     }
 
-    /* Sleek Progress Elements */
     .task-progress-box {
       background: #0c0e14;
       border: 1px solid var(--border);
@@ -338,12 +333,11 @@
     </div>
   </div>
 
-  <!-- Modern Task Modal -->
   <div class="modal-overlay" id="taskModal">
     <div class="modal-box">
       <div class="modal-header-tag">Video Unlock Task</div>
       <div class="modal-title" id="mVideoTitle">Mediafire Video</div>
-      <div class="modal-subtitle">Direct download link unlock karne ke liye 5 short ads dekhein</div>
+      <div class="modal-subtitle">Direct download link unlock karne ke liye 5 video ads poore dekhein</div>
 
       <div class="task-progress-box">
         <div class="progress-info">
@@ -379,7 +373,6 @@
       window.Telegram.WebApp.expand();
     }
 
-    // Firebase Initialization (Chaiwala RTDB)
     const firebaseConfig = {
       apiKey: "AIzaSyBNSpp5jQFiBLCR1f767zZVucZzVzi4kCA",
       authDomain: "chaiwala-40576.firebaseapp.com",
@@ -401,11 +394,44 @@
     const watchAdBtn = document.getElementById("watchAdBtn");
     const downloadBtn = document.getElementById("downloadBtn");
 
+    let currentVideoId = null;
     let activeVideo = null;
     let adsCount = 0;
     const REQUIRED_ADS = 5;
+    const EXPIRY_TIME_MS = 5 * 60 * 1000;
 
-    // Fetch and render feed
+    // Telegram CloudStorage Wrapper
+    function getStoredData(key) {
+      return new Promise((resolve) => {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
+          window.Telegram.WebApp.CloudStorage.getItem(key, (err, value) => {
+            if (!err && value) {
+              resolve(value);
+            } else {
+              resolve(localStorage.getItem(key));
+            }
+          });
+        } else {
+          resolve(localStorage.getItem(key));
+        }
+      });
+    }
+
+    function setStoredData(key, value) {
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
+        window.Telegram.WebApp.CloudStorage.setItem(key, value);
+      }
+      localStorage.setItem(key, value);
+    }
+
+    function removeStoredData(key) {
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
+        window.Telegram.WebApp.CloudStorage.removeItem(key);
+      }
+      localStorage.removeItem(key);
+    }
+
+    // Load Videos
     db.ref("videos").on("value", (snapshot) => {
       const data = snapshot.val();
       videoContainer.innerHTML = "";
@@ -444,33 +470,60 @@
       window.allVideosCache = data;
     });
 
-    window.openTaskModal = function(id) {
+    async function getSavedAdProgress(vidId) {
+      const key = `chw_${vidId.slice(-10)}`;
+      const record = await getStoredData(key);
+      if (!record) return 0;
+
+      try {
+        const parsed = JSON.parse(record);
+        if (Date.now() - parsed.time > EXPIRY_TIME_MS) {
+          removeStoredData(key);
+          return 0;
+        }
+        return parsed.count || 0;
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    function saveAdProgress(vidId, count) {
+      const key = `chw_${vidId.slice(-10)}`;
+      const payload = JSON.stringify({
+        count: count,
+        time: Date.now()
+      });
+      setStoredData(key, payload);
+    }
+
+    window.openTaskModal = async function(id) {
+      currentVideoId = id;
       activeVideo = window.allVideosCache[id];
       if (!activeVideo) return;
 
-      adsCount = 0;
       mVideoTitle.innerText = activeVideo.title;
-      resetStepUI();
 
-      downloadBtn.style.display = "none";
-      watchAdBtn.style.display = "flex";
-      watchAdBtn.innerText = `▶ Watch Video Ad (1/${REQUIRED_ADS})`;
+      adsCount = await getSavedAdProgress(id);
+
+      updateStepUI();
+
+      if (adsCount >= REQUIRED_ADS) {
+        watchAdBtn.style.display = "none";
+        downloadBtn.href = activeVideo.videoUrl;
+        downloadBtn.style.display = "block";
+      } else {
+        downloadBtn.style.display = "none";
+        watchAdBtn.style.display = "flex";
+        watchAdBtn.disabled = false;
+        watchAdBtn.innerText = `▶ Watch Video Ad (${adsCount + 1}/${REQUIRED_ADS})`;
+      }
 
       taskModal.style.display = "flex";
     };
 
     window.closeModal = function() {
       taskModal.style.display = "none";
-      activeVideo = null;
     };
-
-    function resetStepUI() {
-      for (let i = 1; i <= 5; i++) {
-        document.getElementById(`step-${i}`).classList.remove("active");
-      }
-      taskCounterText.innerText = `Ads Watched: 0 / ${REQUIRED_ADS}`;
-      taskPercentText.innerText = "0%";
-    }
 
     function updateStepUI() {
       for (let i = 1; i <= 5; i++) {
@@ -491,26 +544,31 @@
       }
     }
 
-    // Monetag Ad Trigger
     window.watchMonetagAd = function() {
       watchAdBtn.disabled = true;
-      watchAdBtn.innerText = "Ad Loading...";
+      watchAdBtn.innerText = "Video Ad Loading...";
 
-      if (typeof show_88 === 'function') {
-        show_88().then(() => {
-          onAdSuccess();
-        }).catch(() => {
-          onAdSuccess();
-        });
+      if (typeof show_11895299 === 'function') {
+        show_11895299()
+          .then(() => {
+            onRealAdFinished();
+          })
+          .catch((err) => {
+            console.error("Ad closed early:", err);
+            alert("Ad poora nahi dekha gaya! Kripya poora ad dekhein.");
+            watchAdBtn.disabled = false;
+            watchAdBtn.innerText = `▶ Watch Video Ad (${adsCount + 1}/${REQUIRED_ADS})`;
+          });
       } else {
-        setTimeout(() => {
-          onAdSuccess();
-        }, 1200);
+        alert("Ad load ho raha hai, kripya 1-2 second ruk kar dobara dabayein!");
+        watchAdBtn.disabled = false;
+        watchAdBtn.innerText = `▶ Watch Video Ad (${adsCount + 1}/${REQUIRED_ADS})`;
       }
     };
 
-    function onAdSuccess() {
+    function onRealAdFinished() {
       adsCount++;
+      saveAdProgress(currentVideoId, adsCount);
       updateStepUI();
       watchAdBtn.disabled = false;
 
